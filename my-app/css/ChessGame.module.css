@@ -1,0 +1,49 @@
+/* ChessGame.module.css */
+
+.chessGame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.playerInfo {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.gameResult {
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Chessboard component styles */
+.chessboard {
+  width: 400px; /* Adjust as needed */
+}
+
+/* Square styles */
+.square {
+  width: 50px;
+  height: 50px;
+}
+
+/* Dark squares */
+.square.dark {
+  background-color: #769656; /* Dark square color */
+}
+
+/* Light squares */
+.square.light {
+  background-color: #eeeed2; /* Light square color */
+}
+
+/* Piece styles */
+.piece {
+  width: 100%;
+  height: 100%;
+}
+
+/* PlayerStatus component styles */
+.playerStatus {
+  font-weight: bold;
+}
