@@ -87,10 +87,7 @@ export default function Chat() {
       const relayedMultiaddr = multiaddr(
         `/p2p/${peerId}/webrtc/p2p/${libp2p.peerId.toString()}`
       );
-      const connection = await libp2p.dialProtocol(
-        relayedMultiaddr,
-        "/chat/1.0.0"
-      );
+      const connection = await libp2p.dial(relayedMultiaddr, "/chat/1.0.0");
 
       // Handle connection establishment
       setConnectedTo(peerId);

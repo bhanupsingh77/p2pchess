@@ -1,27 +1,38 @@
 // pages/index.jsx
 "use client";
-import React, { useEffect, useState } from "react";
-import PeerToPeerChess from "../../components/PeerToPeerChess";
-import { createLibp2pNode, createLibp2p } from "../../components/libp2p";
-import Chat from "../../components/Chat";
+// pages/index.js
+import React, { useState } from "react";
+import PeerConnection from "../../componentstwo/PeerConnection";
+import ChessGame from "../../componentstwo/ChessGame";
+import ChatBox from "../../componentstwo/ChatBox";
 
 const IndexPage = () => {
-  const [libp2p, setLibp2p] = useState(null);
+  const [connection, setConnection] = useState(null);
 
-  useEffect(() => {
-    async function initializeLibp2p() {
-      const node = await createLibp2pNode();
-      setLibp2p(node);
+  const handleConnect = (conn) => {
+    setConnection(conn);
+  };
+
+  const handleDisconnect = () => {
+    if (connection) {
+      connection.close();
+      setConnection(null);
     }
-    initializeLibp2p();
-  }, []);
+  };
 
   return (
     <div>
-      <div>
-        <Chat />
-      </div>
-      {libp2p && <PeerToPeerChess libp2p={libp2p} />}
+      <h1>Peer-to-Peer Chess Game</h1>
+      <PeerConnection
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+      />
+      {connection && (
+        <div>
+          <ChessGame connection={connection} />
+          <ChatBox connection={connection} />
+        </div>
+      )}
     </div>
   );
 };
