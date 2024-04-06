@@ -1,107 +1,128 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import styles from "../css/PeerConnection.module.css";
-import Peer, { DataConnection } from "peerjs";
+import { useRef, useEffect, useState } from "react";
+import Peer from "peerjs";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import usePeerReducer from "../customHooks/usePeerReducer";
+import ChessGame from "./ChessGame";
+import ScreenshotComponent from "./Screenshot";
 
-const PeerConnection = ({ onConnect, onDisconnect }) => {
-  const [peer, setPeer] = useState(null);
-  const [peerId, setPeerId] = useState("");
-  const [connectionStatus, setConnectionStatus] = useState("");
-  const [connectionMap, setConnectionMap] = useState(new Map());
+const PeerConnection = () => {
+  const { state, dispatch } = usePeerReducer();
+  const [connecting, setConnecting] = useState(false);
+  const [peerIdInput, setPeerIdInput] = useState("");
+  const peerRef = useRef(null);
 
   useEffect(() => {
-    const peer = new Peer();
-    peer.on("open", () => {
-      setPeer(peer);
-    });
+    const initializePeer = async () => {
+      try {
+        const peer = new Peer();
+        peerRef.current = peer;
 
-    peer.on("connection", (conn) => {
-      console.log("Incoming connection from peer", conn.peer);
-      setConnectionMap(new Map(connectionMap.set(conn.peer, conn)));
-    });
+        peer.on("open", () => {
+          dispatch({ type: "SET_PEER", payload: peer });
+        });
+
+        peer.on("connection", (conn) => {
+          dispatch({ type: "ADD_CONNECTION", payload: conn });
+          toast.info(`Connected to ${conn.peer}`);
+          dispatch({ type: "SET_CONNECTION", payload: conn }); // Set the connection state when a connection is established
+        });
+
+        peer.on("error", (error) => {
+          toast.error("PeerJS Error: " + error.message);
+          dispatch({ type: "SET_ERROR", payload: error });
+        });
+
+        peer.on("disconnected", () => {
+          toast.warn("Disconnected from Peer server");
+          dispatch({ type: "SET_PEER", payload: null });
+          dispatch({ type: "REMOVE_CONNECTIONS" }); // Clear connections when disconnected
+          dispatch({ type: "SET_CONNECTION", payload: null }); // Clear connection state
+        });
+      } catch (error) {
+        toast.error("PeerJS Initialization Error: " + error.message);
+        dispatch({ type: "SET_ERROR", payload: error });
+      }
+    };
+
+    initializePeer();
 
     return () => {
-      peer.disconnect();
+      if (peerRef.current) {
+        peerRef.current.disconnect();
+      }
     };
-  }, []);
-
-  const connectPeer = async (id) => {
-    return new Promise((resolve, reject) => {
-      if (!peer) {
-        reject(new Error("Peer doesn't start yet"));
-        return;
-      }
-      if (connectionMap.has(id)) {
-        reject(new Error("Connection existed"));
-        return;
-      }
-      try {
-        let conn = peer.connect(id, { reliable: true });
-        if (!conn) {
-          reject(new Error("Connection can't be established"));
-        } else {
-          conn
-            .on("open", function () {
-              console.log("Connect to: " + id);
-              setConnectionMap(new Map(connectionMap.set(id, conn)));
-              resolve();
-            })
-            .on("error", function (err) {
-              console.log(err);
-              reject(err);
-            });
-        }
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
+  }, [dispatch]);
 
   const handleConnect = () => {
-    connectPeer(peerId)
-      .then(() => {
-        setConnectionStatus("Connected");
-        onConnect();
-      })
-      .catch((err) => {
-        console.error("Failed to connect to peer:", err.message);
-        setConnectionStatus("Disconnected");
-      });
+    setConnecting(true);
+    try {
+      if (state.connection) {
+        state.connection.close(); // Close existing connection
+        dispatch({ type: "SET_CONNECTION", payload: null }); // Clear connection state
+      }
+      const conn = state.peer.connect(peerIdInput, { reliable: true });
+      dispatch({ type: "SET_CONNECTION", payload: conn }); // Set the connection state
+      toast.info(`Connecting to ${peerIdInput}`);
+    } catch (error) {
+      toast.error("Connection Error: " + error.message);
+      dispatch({ type: "SET_ERROR", payload: error });
+    } finally {
+      setConnecting(false);
+    }
   };
 
-  const handleDisconnect = () => {
-    if (!peer) return;
-    peer.disconnect();
-    onDisconnect();
-    setConnectionStatus("Disconnected");
+  const handleDisconnect = (conn) => {
+    if (conn && conn.peer) {
+      conn.close();
+      dispatch({ type: "REMOVE_CONNECTION", payload: conn.peer });
+    }
   };
 
+  const handleInputChange = (event) => {
+    setPeerIdInput(event.target.value);
+  };
+  console.log(1, state);
   return (
-    <div className={styles.peerConnection}>
-      <h2>Peer Connection</h2>
-      <p>Your Peer ID: {peer ? peer.id : "Loading..."}</p>
-      <div className={styles.inputContainer}>
-        <input
-          type="text"
-          placeholder="Enter Peer ID"
-          value={peerId}
-          onChange={(e) => setPeerId(e.target.value)}
-        />
-        <button className={styles.button} onClick={handleConnect}>
-          Connect
-        </button>
-        <button className={styles.button} onClick={handleDisconnect}>
-          Disconnect
-        </button>
+    <div>
+      {state.error && (
+        <div>
+          <h2>Error</h2>
+          <p>{state.error.message}</p>
+        </div>
+      )}
+      {state.peer && (
+        <ScreenshotComponent elementId="elementToCapture">
+          <div id="elementToCapture">
+            <h2>Peer Connection</h2>
+            <p>Your Peer ID: {state.peer.id || "Loading..."}</p>
+            <input
+              type="text"
+              value={peerIdInput}
+              onChange={handleInputChange}
+              placeholder="Enter Peer ID"
+            />
+            <button onClick={handleConnect} disabled={connecting}>
+              {connecting ? "Connecting..." : "Connect to Peer"}
+            </button>
+          </div>
+        </ScreenshotComponent>
+      )}
+      <div>
+        <h2>Peer Connections</h2>
+        <ul>
+          {state.connections?.map((conn) => (
+            <li key={conn.peer}>
+              {conn.peer}
+              <button onClick={() => handleDisconnect(conn)}>Disconnect</button>
+            </li>
+          ))}
+        </ul>
       </div>
-      <p>Connection Status: {connectionStatus}</p>
-      <p>Connected Peers:</p>
-      <ul>
-        {Array.from(connectionMap.keys()).map((peerId) => (
-          <li key={peerId}>{peerId}</li>
-        ))}
-      </ul>
+      {state.connection && <ChessGame state={state} />}
+      {/* Render ChessGame component only when a connection is established */}
     </div>
   );
 };

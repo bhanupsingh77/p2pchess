@@ -2,16 +2,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+}
+
+.title {
+  margin-bottom: 20px;
+}
+
+.info {
   margin-bottom: 20px;
 }
 
 .board {
-  margin-bottom: 20px;
-}
-
-.timer {
-  font-size: 18px;
+  width: 400px;
 }
