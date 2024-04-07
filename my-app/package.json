@@ -14,7 +14,15 @@
     "@libp2p/bootstrap": "^10.0.16",
     "@libp2p/webrtc": "^4.0.22",
     "@libp2p/websockets": "^8.0.16",
+    "@metaplex-foundation/js-plugin-nft-storage": "^0.20.0",
+    "@metaplex-foundation/mpl-core": "^0.4.4",
+    "@metaplex-foundation/umi": "^0.9.1",
+    "@metaplex-foundation/umi-signer-wallet-adapters": "^0.9.1",
+    "@metaplex-foundation/umi-uploader-nft-storage": "^0.9.1",
     "@multiformats/multiaddr": "^12.2.1",
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-react-ui": "^0.9.35",
+    "@solana/web3.js": "^1.91.4",
     "chess.js": "^1.0.0-beta.8",
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
@@ -26,7 +34,8 @@
     "react": "^18",
     "react-chessboard": "^4.5.0",
     "react-dom": "^18",
-    "react-toastify": "^10.0.5"
+    "react-toastify": "^10.0.5",
+    "web-streams-polyfill": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
